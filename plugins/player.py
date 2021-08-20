@@ -46,6 +46,7 @@ ADMINS=Config.ADMINS
 CHAT=Config.CHAT
 LOG_GROUP=Config.LOG_GROUP
 GET_THUMB={}
+
 async def is_admin(_, client, message: Message):
     admins = await mp.get_admins(CHAT)
     if message.from_user is None and message.sender_chat:
@@ -59,7 +60,7 @@ admin_filter=filters.create(is_admin)
 
 
 
-@Client.on_message(filters.command(["play", f"play@{U}"]) & (filters.chat(CHAT) | filters.private) | filters.audio & filters.private)
+@Client.on_message(filters.command(["play", f"play@{U}", f"ytplay"]) & (filters.chat(CHAT) | filters.private) | filters.audio & filters.private)
 async def yplay(_, message: Message):
     if ADMIN_ONLY == "Y":
         admins = await mp.get_admins(CHAT)
@@ -545,7 +546,7 @@ async def skip_track(_, m: Message):
     await mp.delete(m)
 
 
-@Client.on_message(filters.command(["join", f"join@{U}"]) & admin_filter & (filters.chat(CHAT) | filters.private))
+@Client.on_message(filters.command(["joinvc", f"joinvc@{U}"]) & admin_filter & (filters.chat(CHAT) | filters.private))
 async def join_group_call(client, m: Message):
     group_call = mp.group_call
     if group_call.is_connected:
@@ -560,7 +561,7 @@ async def join_group_call(client, m: Message):
     await mp.delete(m)
 
 
-@Client.on_message(filters.command(["leave", f"leave@{U}"]) & admin_filter)
+@Client.on_message(filters.command(["leavevc", f"leavevc@{U}"]) & admin_filter)
 async def leave_voice_chat(_, m: Message):
     group_call = mp.group_call
     if not group_call.is_connected:
@@ -595,7 +596,7 @@ async def list_voice_chat(client, m: Message):
     await mp.delete(m)
 
 
-@Client.on_message(filters.command(["stop", f"stop@{U}"]) & admin_filter & (filters.chat(CHAT) | filters.private))
+@Client.on_message(filters.command(["stopvc", f"stopvc@{U}"]) & admin_filter & (filters.chat(CHAT) | filters.private))
 async def stop_playing(_, m: Message):
     group_call = mp.group_call
     if not group_call.is_connected:
@@ -696,7 +697,7 @@ async def mute(_, m: Message):
     await mp.delete(k)
     await mp.delete(m)
 
-@Client.on_message(filters.command(["unmute", f"unmute@{U}"]) & admin_filter & (filters.chat(CHAT) | filters.private))
+@Client.on_message(filters.command(["unmutevc", f"unmutevc@{U}"]) & admin_filter & (filters.chat(CHAT) | filters.private))
 async def unmute(_, m: Message):
     group_call = mp.group_call
     if not group_call.is_connected:
@@ -794,24 +795,6 @@ async def clear_play_list(client, m: Message):
         await mp.delete(m)
 
 
-@Client.on_message(filters.command(["cplay", f"cplay@{U}"]) & admin_filter & (filters.chat(CHAT) | filters.private))
-async def channel_play_list(client, m: Message):
-    group_call = mp.group_call
-    if not group_call.is_connected:
-        await mp.start_call()
-    if len(m.command) < 2:
-        k=await m.reply_text('You forgot to pass channel id or channel username.\nExample usage: <code>/cplay Myoosik</code> or <code>/cplay -1002525252525</code>.\n\n⚠️ If you are using channel id, make sure both the bot and user account are member of the given channel.')
-        await mp.delete(k)
-        await mp.delete(m)
-        return
-     
-    k=await m.reply_text(f"Starting Playing From <code>{m.command[1]}</code>")
-    group_call.stop_playout()
-    playlist.clear()   
-    await mp.c_play(m.command[1])
-    await mp.delete(k)
-    await mp.delete(m)
-
 
 @Client.on_message(filters.command(['upload', f'upload@{U}']) & (filters.chat(CHAT) | filters.private))
 async def upload(client, message):
@@ -850,7 +833,7 @@ async def upload(client, message):
             pass
  
 
-admincmds=["join", "unmute", "mute", "leave", "clean", "vc", "pause", "resume", "stop", "skip", "radio", "stopradio", "replay", "restart", "volume", "shuffle", "clearplaylist", "cplay", f"cplay@{U}", f"clearplaylist@{U}", f"shuffle@{U}", f"volume@{U}", f"join@{U}", f"unmute@{U}", f"mute@{U}", f"leave@{U}", f"clean@{U}", f"vc@{U}", f"pause@{U}", f"resume@{U}", f"stop@{U}", f"skip@{U}", f"radio@{U}", f"stopradio@{U}", f"replay@{U}", f"restart@{U}"]
+admincmds=["join", "unmutevc", "mutevc", "leavevc", "clean", "vc", "pause", "resume", "stopvc", "skip", "replay", "restartvc", "volume", "shuffle", "clearplaylist", f"clearplaylist@{U}", f"shuffle@{U}", f"volume@{U}", f"join@{U}", f"unmutevc@{U}", f"mutevc@{U}", f"leave@{U}", f"clean@{U}", f"vc@{U}", f"pause@{U}", f"resume@{U}", f"stopvc@{U}", f"skip@{U}", f"replay@{U}", f"restartvc@{U}"]
 
 @Client.on_message(filters.command(admincmds) & ~admin_filter & (filters.chat(CHAT) | filters.private))
 async def notforu(_, m: Message):
@@ -858,18 +841,3 @@ async def notforu(_, m: Message):
     await mp.delete(k)
     await mp.delete(m)
 allcmd = ["play", "player", "splay", f"splay@{U}", f"play@{U}", f"player@{U}"] + admincmds
-
-@Client.on_message(filters.command(allcmd) & ~filters.chat(CHAT) & filters.group)
-async def not_chat(_, m: Message):
-    buttons = [
-        [
-            InlineKeyboardButton('⚡️Make Own Bot', url='https://heroku.com/deploy?template=https://github.com/subinps/MusicPlayer'),
-            InlineKeyboardButton('🧩 Source Code', url='https://github.com/subinps/MusicPlayer'),
-        ],
-        [
-            InlineKeyboardButton('How to Make', url='https://youtu.be/iBK-5pP2eHM'),
-            InlineKeyboardButton('👨🏼‍🦯 Help', callback_data='help')       
-        ]
-        ]
-    k=await m.reply("<b>You can't use this bot in this group, for that you have to make your own bot from the [SOURCE CODE](https://github.com/subinps/MusicPlayer) below.</b>", disable_web_page_preview=True, reply_markup=InlineKeyboardMarkup(buttons))
-    await mp.delete(m)
